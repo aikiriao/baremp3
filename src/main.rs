@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for ch in 0..format.num_channels {
             const AMPLITUDE: f32 = i16::MAX as f32;
             writer
-                .write_sample((output[smpl + ch * format.num_channels] * AMPLITUDE) as i16)
+                .write_sample((output[smpl + ch * format.num_channels] * AMPLITUDE).round() as i16)
                 .unwrap();
         }
     }
