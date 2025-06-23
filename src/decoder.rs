@@ -505,14 +505,14 @@ fn decode_huffman(
     while i < MP3_NUM_SAMPLES_PER_GRANULE
         && positon_isin_count1data!(position, part2_start, part3_end)
     {
-        // 4つ組(v,w,x,y)で復号
-        let vwxy = mp3_huffman_decode_count1_data(granule.count1table_select as usize, buffer);
-        output[i + 0] = vwxy.2 as f32;
-        output[i + 1] = vwxy.3 as f32;
+        // 4つ組(x,y,v,w)で復号
+        let xyvw = mp3_huffman_decode_count1_data(granule.count1table_select as usize, buffer);
+        output[i + 0] = xyvw.0 as f32;
+        output[i + 1] = xyvw.1 as f32;
         // たとえばi == 574のときオーバーランするため範囲チェック
         if (i + 2) < MP3_NUM_SAMPLES_PER_GRANULE {
-            output[i + 2] = vwxy.0 as f32;
-            output[i + 3] = vwxy.1 as f32;
+            output[i + 2] = xyvw.2 as f32;
+            output[i + 3] = xyvw.3 as f32;
         }
         i += 4;
         position = buffer.get_total_read_bits();

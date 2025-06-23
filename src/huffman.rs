@@ -3134,22 +3134,12 @@ pub fn mp3_huffman_decode_count1_data(
     let z = huffman_decodecore(table, buffer).1;
 
     // count1_table(-1, 0, 1)の復号
-    let mut v = (z >> 3) & 1;
-    let mut w = (z >> 2) & 1;
-    let mut x = (z >> 1) & 1;
-    let mut y = (z >> 0) & 1;
+    let mut x = (z >> 3) & 1;
+    let mut y = (z >> 2) & 1;
+    let mut v = (z >> 1) & 1;
+    let mut w = (z >> 0) & 1;
 
     // 符号ビットの適用
-    if v != 0 {
-        if buffer.get_bits(1) == 1 {
-            v = -v;
-        }
-    }
-    if w != 0 {
-        if buffer.get_bits(1) == 1 {
-            w = -w;
-        }
-    }
     if x != 0 {
         if buffer.get_bits(1) == 1 {
             x = -x;
@@ -3158,6 +3148,16 @@ pub fn mp3_huffman_decode_count1_data(
     if y != 0 {
         if buffer.get_bits(1) == 1 {
             y = -y;
+        }
+    }
+    if v != 0 {
+        if buffer.get_bits(1) == 1 {
+            v = -v;
+        }
+    }
+    if w != 0 {
+        if buffer.get_bits(1) == 1 {
+            w = -w;
         }
     }
 
