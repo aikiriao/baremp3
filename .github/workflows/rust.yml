@@ -1,0 +1,43 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: |
+        cargo build --verbose
+        cargo build --release --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Upload artifacts on Windows
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: baremp3_${{ matrix.os }}
+        path: |
+          target/release/baremp3.exe
+        if-no-files-found: error
+    - name: Upload artifacts on *nix platforms
+      if: runner.os == 'Linux' || runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: baremp3_${{ matrix.os }}
+        path: |
+          target/release/baremp3
+        if-no-files-found: error
