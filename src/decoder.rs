@@ -750,6 +750,27 @@ fn decode_frame_information(
     Ok((read_pos, maindata_size, header, side_info))
 }
 
+/// ID3v2タグ全体のサイズを計算
+fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
+    const ID3V2HEADER_SIZE: usize = 10;
+
+    // サイズ不足
+    if data.len() < ID3V2HEADER_SIZE {
+        return Err(MP3DecodeError::InvalidHeader);
+    }
+
+    // タグがない場合
+    if data[0] != b'I' || data[1] != b'D' || data[2] != b'3' {
+        return Ok(0);
+    }
+
+    Ok(ID3V2HEADER_SIZE
+        + ((data[6] as usize) << 21)
+        + ((data[7] as usize) << 14)
+        + ((data[8] as usize) << 7)
+        + ((data[9] as usize) << 0))
+}
+
 /// フォーマット情報の取得
 pub fn get_format_information(data: &[u8]) -> Result<MP3FormatInformation, MP3DecodeError> {
     // 仮のフォーマットを作成
@@ -760,8 +781,10 @@ pub fn get_format_information(data: &[u8]) -> Result<MP3FormatInformation, MP3De
         bit_rate: MP3BitRate::Kbps128,
     };
 
+    // ID3v2タグをスキップ
+    let mut read_pos = get_id3v2tag_size(data)?;
+
     // 先頭からフレーム情報のみを取得
-    let mut read_pos = 0;
     loop {
         match decode_frame_information(&data[read_pos..]) {
             Ok((header_size, maindata_size, header, _)) => {
@@ -785,26 +808,6 @@ pub fn get_format_information(data: &[u8]) -> Result<MP3FormatInformation, MP3De
     }
 
     Ok(format)
-}
-
-/// ID3v2タグ全体のサイズを計算
-pub fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
-    const ID3V2HEADER_SIZE: usize = 10;
-
-    // サイズ不足
-    if data.len() < ID3V2HEADER_SIZE {
-        return Err(MP3DecodeError::InvalidHeader);
-    }
-
-    // タグがない場合
-    if data[0] != b'I' || data[1] != b'D' || data[2] != b'3' {
-        return Ok(0);
-    }
-
-    Ok(((data[6] as usize) << 21)
-        + ((data[7] as usize) << 14)
-        + ((data[8] as usize) << 7)
-        + ((data[9] as usize) << 0))
 }
 
 impl MP3Decoder {
