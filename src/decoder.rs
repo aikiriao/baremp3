@@ -485,6 +485,7 @@ fn decode_huffman(
     };
 
     // bigvalueの復号
+    assert!((2 * granule.big_values as usize) <= MP3_NUM_SAMPLES_PER_GRANULE);
     for i in (0..(2 * granule.big_values as usize)).step_by(2) {
         let index = if i < region1_start {
             granule.table_select[0]
@@ -786,6 +787,26 @@ pub fn get_format_information(data: &[u8]) -> Result<MP3FormatInformation, MP3De
     Ok(format)
 }
 
+/// ID3v2タグ全体のサイズを計算
+pub fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
+    const ID3V2HEADER_SIZE: usize = 10;
+
+    // サイズ不足
+    if data.len() < ID3V2HEADER_SIZE {
+        return Err(MP3DecodeError::InvalidHeader);
+    }
+
+    // タグがない場合
+    if data[0] != b'I' || data[1] != b'D' || data[2] != b'3' {
+        return Ok(0);
+    }
+
+    Ok(((data[6] as usize) << 21)
+        + ((data[7] as usize) << 14)
+        + ((data[8] as usize) << 7)
+        + ((data[9] as usize) << 0))
+}
+
 impl MP3Decoder {
     /// デコーダ生成
     pub fn new() -> Self {
@@ -943,7 +964,8 @@ impl MP3Decoder {
         // 出力バッファ確保
         let mut buffer = [[0.0f32; MP3_NUM_SAMPLES_PER_FRAME]; MP3_MAX_NUM_CHANNELS];
         let mut num_samples = 0;
-        let mut read_pos = 0;
+        // ID3v2タグをスキップ
+        let mut read_pos = get_id3v2tag_size(data)?;
         loop {
             // 1フレームデコードを繰り返す
             match self.decode_frame(&data[read_pos..], &mut buffer) {
