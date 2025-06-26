@@ -764,11 +764,12 @@ fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
         return Ok(0);
     }
 
-    Ok(ID3V2HEADER_SIZE
-        + ((data[6] as usize) << 21)
+    let size = ((data[6] as usize) << 21)
         + ((data[7] as usize) << 14)
         + ((data[8] as usize) << 7)
-        + ((data[9] as usize) << 0))
+        + ((data[9] as usize) << 0);
+
+    Ok(ID3V2HEADER_SIZE + size)
 }
 
 /// フォーマット情報の取得
