@@ -700,6 +700,8 @@ pub enum MP3DecodeError {
     InvalidFormat,
     /// バッファサイズが不十分
     InsufficientBuffer,
+    /// データサイズが不十分
+    InsufficientData,
 }
 
 impl fmt::Display for MP3DecodeError {
@@ -751,19 +753,21 @@ fn decode_frame_information(
 }
 
 /// ID3v2タグ全体のサイズを計算
-fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
+pub fn get_id3v2tag_size(data: &[u8]) -> Result<usize, MP3DecodeError> {
     const ID3V2HEADER_SIZE: usize = 10;
 
     // サイズ不足
     if data.len() < ID3V2HEADER_SIZE {
-        return Err(MP3DecodeError::InvalidHeader);
+        return Err(MP3DecodeError::InsufficientData);
     }
 
-    // タグがない場合
+    // タグが不正
     if data[0] != b'I' || data[1] != b'D' || data[2] != b'3' {
-        return Ok(0);
+        return Err(MP3DecodeError::InvalidFormat);
     }
 
+    // タグ以降のサイズを計算
+    // https://eleken.y-lab.org/report/other/mp3tags.shtml を参照
     let size = ((data[6] as usize) << 21)
         + ((data[7] as usize) << 14)
         + ((data[8] as usize) << 7)
@@ -783,7 +787,15 @@ pub fn get_format_information(data: &[u8]) -> Result<MP3FormatInformation, MP3De
     };
 
     // ID3v2タグをスキップ
-    let mut read_pos = get_id3v2tag_size(data)?;
+    let mut read_pos = match get_id3v2tag_size(data) {
+        Ok(size) => size,
+        Err(err) => match err {
+            MP3DecodeError::InvalidFormat => 0,
+            _ => {
+                return Err(err);
+            }
+        },
+    };
 
     // 先頭からフレーム情報のみを取得
     loop {
@@ -969,7 +981,15 @@ impl MP3Decoder {
         let mut buffer = [[0.0f32; MP3_NUM_SAMPLES_PER_FRAME]; MP3_MAX_NUM_CHANNELS];
         let mut num_samples = 0;
         // ID3v2タグをスキップ
-        let mut read_pos = get_id3v2tag_size(data)?;
+        let mut read_pos = match get_id3v2tag_size(data) {
+            Ok(size) => size,
+            Err(err) => match err {
+                MP3DecodeError::InvalidFormat => 0,
+                _ => {
+                    return Err(err);
+                }
+            },
+        };
         loop {
             // 1フレームデコードを繰り返す
             match self.decode_frame(&data[read_pos..], &mut buffer) {
