@@ -4,13 +4,6 @@ pub const MP3_MAX_NUM_CHANNELS: usize = 2;
 pub const MP3_NUM_SAMPLES_PER_FRAME: usize = 1152;
 /// フレームあたりグラニュール数
 pub const MP3_NUM_GRANLES_PER_FRAME: usize = 2;
-/// グラニュール当たりサンプル数
-pub const MP3_NUM_SAMPLES_PER_GRANULE: usize =
-    MP3_NUM_SAMPLES_PER_FRAME / MP3_NUM_GRANLES_PER_FRAME;
-/// longブロックのクリティカルバンド数
-pub const MP3_NUM_CRITICAL_BANDS_LONG: usize = 23;
-/// shortブロックのクリティカルバンド数
-pub const MP3_NUM_CRITICAL_BANDS_SHORT: usize = 13;
 
 /// MPEGバージョン
 pub enum MPEGVersion {

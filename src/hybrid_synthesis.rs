@@ -1,5 +1,12 @@
 use crate::types::*;
 
+/// グラニュール当たりサンプル数
+pub const MP3_NUM_SAMPLES_PER_GRANULE: usize =
+    MP3_NUM_SAMPLES_PER_FRAME / MP3_NUM_GRANLES_PER_FRAME;
+/// longブロックのクリティカルバンド数
+pub const MP3_NUM_CRITICAL_BANDS_LONG: usize = 23;
+/// shortブロックのクリティカルバンド数
+pub const MP3_NUM_CRITICAL_BANDS_SHORT: usize = 13;
 /// DCTのサイズ
 pub const MP3_DCT_SIZE: usize = 18;
 /// DCTのサイズ（ショート）
